@@ -5,6 +5,8 @@ class Solution:
     def maxTaskAssign(
         self, tasks: List[int], workers: List[int], pills: int, strength: int
     ) -> int:
+        # can we complete exactly k tasks where k is the length of tasks list
+        # for a given k, how can we take k easiest tasks and k strongest workers
         max_tasks = 0
         used_worker = set()
         for i in range(len(tasks)):
