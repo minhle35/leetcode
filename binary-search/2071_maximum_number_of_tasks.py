@@ -46,8 +46,13 @@ class Solution:
         m = len(workers)
         tasks.sort()
         workers.sort()
-        for k in range(min(n, m), 0, -1):
-            if can_achieve(k):
-                return k
+        l, h, answer = 0, min(n, m), 0
+        while l <= h:
+            mid = (l + h) // 2
+            if can_achieve(mid):
+                answer = mid
+                l = mid + 1
+            else:
+                h = mid - 1
 
-        return 0
+        return answer
