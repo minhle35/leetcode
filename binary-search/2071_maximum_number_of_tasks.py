@@ -1,3 +1,4 @@
+from collections import deque
 from typing import List
 
 
@@ -5,21 +6,48 @@ class Solution:
     def maxTaskAssign(
         self, tasks: List[int], workers: List[int], pills: int, strength: int
     ) -> int:
-        # can we complete exactly k tasks where k is the length of tasks list
-        # for a given k, how can we take k easiest tasks and k strongest workers
-        max_tasks = 0
-        used_worker = set()
-        for i in range(len(tasks)):
-            for j in range(len(workers)):
-                if j in used_worker:
-                    continue
-                if workers[j] >= tasks[i]:
-                    used_worker.add(j)
-                    max_tasks += 1
-                    break
-                elif pills > 0 and strength + workers[j] >= tasks[i]:
-                    used_worker.add(j)
-                    pills -= 1
-                    max_tasks += 1
-                    break
-        return max_tasks
+        # deque of tasks sorted: [weak ...   strong]
+        # .                        ^popleft.  ^pop
+        #                         ^use pill.  ^no pill needed
+        # there are two operations we need to run on each task we iterate in sorted tasks
+        #       Check if the strongest worker can do it without a pill
+        #       if not, assign a pill to the weakest eligible worker
+
+        def can_achieve(k) -> bool:
+            """
+            check if strongest workers can solve k easiest tasks and return true
+            """
+            t = tasks[:k]
+            w = workers[-k:]
+            dq = deque()
+            remaining_p = pills
+            # we process tasks from hardest
+            # harder tasks have fewer valid capable workers
+            # if we waste strong workers on easier tasks first, we get stuck later
+            # we start with the first hardest task: k - 1, read again down to know why k - 1
+            j = k - 1
+            for i in range(k - 1, -1, -1):
+                while j >= 0 and w[j] + strength >= t[i]:
+                    dq.appendleft(w[j])
+                    j -= 1
+                if not dq:
+                    return False
+                if dq[-1] >= t[i]:
+                    dq.pop()
+                elif remaining_p > 0:
+                    dq.popleft()
+                    remaining_p -= 1
+                else:
+                    return False
+
+            return True
+
+        n = len(tasks)
+        m = len(workers)
+        tasks.sort()
+        workers.sort()
+        for k in range(min(n, m), 0, -1):
+            if can_achieve(k):
+                return k
+
+        return 0
